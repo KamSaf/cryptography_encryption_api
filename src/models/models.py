@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 
-class SetSymmetricKey(BaseModel):
-    key: str
+class NewSymmetricKey(BaseModel):
+    key: str | None = None
 
 
 if __name__ == "__main__":

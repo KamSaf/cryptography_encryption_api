@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 import os
 from sqlalchemy.orm import Session
 from src.db_stuff.utils import get_db
 from src.db_stuff.models import SymmetricKey
-from src.models.models import SetSymmetricKey
+from src.models.models import NewSymmetricKey
 
 router = APIRouter()
+
+KEY_LENGTH = 64
 
 
 @router.get("/symmetric/key")
@@ -17,20 +19,21 @@ def get_sym_key():
 
 
 @router.post("/symmetric/key")
-def post_sym_key(post_data: SetSymmetricKey, db: Session = Depends(get_db)):
+def post_sym_key(post_data: NewSymmetricKey | None = None, db: Session = Depends(get_db)):
     """
-    ustawia na serwerze klucz symetryczny podany w postaci HEX w request
+    Sets symmetric key on the server
     """
-    if len(post_data.key) != 64:
-        return {"message": "Key must be 64 characters long"}
-
+    if not post_data or not post_data.key:
+        raise HTTPException(status_code=400, detail="No key provided")
+    if len(post_data.key) != KEY_LENGTH or type(post_data.key) is not str:
+        raise HTTPException(status_code=411, detail="Key must be 64 characters long string")
     try:
-        key_obj = SymmetricKey()
+        key_obj = SymmetricKey(key=post_data.key)
         db.add(key_obj)
         db.commit()
         return {"message": "New symmetric key succesfully set"}
-    except Exception as e:
-        return {"error": e}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
 
 
 @router.post("/symmetric/encode")
