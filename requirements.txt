@@ -2,3 +2,5 @@ fastapi
 cryptography
 pytest
 uvicorn
+SQLAlchemy
+python-multipart
