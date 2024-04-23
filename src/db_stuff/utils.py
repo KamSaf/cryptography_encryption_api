@@ -1,5 +1,7 @@
 from src.db_stuff.config import SessionLocal
 from sqlalchemy.orm import Session
+from src.db_stuff.models import SymmetricKey
+from sqlalchemy import select
 
 
 def get_db():
@@ -10,8 +12,10 @@ def get_db():
         db.close()
 
 
-def get_sym_key(db: Session):
-    return "aa800b403438f72208d8846787c15aa8640d8dac3e0f41ac9021da6bc2bae4f6"
+def get_sym_key(db: Session) -> str | None:
+    stmt = select(SymmetricKey.key).order_by(SymmetricKey.create_date.desc())
+    result = db.execute(stmt).first()
+    return result[0] if result else None
 
 
 if __name__ == "__main__":
