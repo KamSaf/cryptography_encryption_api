@@ -1,5 +1,5 @@
 from sqlalchemy import Column, DateTime, func, Integer, String
-from config import Base
+from src.db_stuff.config import Base
 
 
 class SymmetricKey(Base):
@@ -7,3 +7,7 @@ class SymmetricKey(Base):
     id = Column(Integer, primary_key=True)
     key = Column(String, nullable=False)
     create_date = Column(DateTime(timezone=True), default=func.now())
+
+
+if __name__ == "__main__":
+    pass
