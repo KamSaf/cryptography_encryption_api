@@ -24,7 +24,7 @@ def get_sym_key():
 @router.post("/symmetric/key")
 def post_sym_key(post_data: NewSymmetricKey | None = None, db: Session = Depends(get_db)):
     """
-    Sets symmetric key on the server
+    Sets symmetric key on the server.
     """
     if not post_data or not post_data.key:
         raise HTTPException(status_code=400, detail="No key provided")
@@ -42,7 +42,7 @@ def post_sym_key(post_data: NewSymmetricKey | None = None, db: Session = Depends
 @router.post("/symmetric/encode")
 def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_db)):
     """
-    Endpoint returning encrypted form of given message, using currently set symmetric key.
+    Encrypts given message using currently set symmetric key.
     """
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No message provided")
@@ -64,7 +64,7 @@ def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_
 @router.post("/symmetric/decode")
 def post_sym_decode(post_data: Message | None = None, db: Session = Depends(get_db)):
     """
-    Endpoint returning decrypted form of given message, using currently set symmetric key.
+    Decrypts given message using currently set symmetric key.
     """
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No key provided")
