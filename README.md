@@ -33,4 +33,3 @@ While in app directory, run:
 While in app directory, run:
 
     python run_tests.py
-    

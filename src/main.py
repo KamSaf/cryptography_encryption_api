@@ -10,26 +10,26 @@ app.include_router(asymmetric.router)
 
 
 @app.get("/")
-def root():
+def root() -> dict:
     """
     Return list of avaible endpoints.
     """
     return {
         "Avaible endpoints": {
             "GET": {
-                "/symetric/key": "Return randomly generated symmetric key",
-                "/asymetric/key": "",
-                "/asymetric/key/ssh": ""
+                "/symmetric/key": "Return randomly generated symmetric key",
+                "/asymmetric/key": "",
+                "/asymmetric/key/ssh": ""
             },
             "POST": {
-                "/symetric/key": "Sets symmetric key on the server",
-                "/symetric/encode": "Encrypts message using currently set symmetric key",
-                "/symetric/decode": "Decrypts message using currently set symmetric key",
-                "/asymetric/key": "",
-                "/asymetric/verify": "",
-                "/asymetric/sign": "",
-                "/asymetric/encode": "",
-                "/asymetric/decode": ""
+                "/symmetric/key": "Sets symmetric key on the server",
+                "/symmetric/encode": "Encrypts message using currently set symmetric key",
+                "/symmetric/decode": "Decrypts message using currently set symmetric key",
+                "/asymmetric/key": "",
+                "/asymmetric/verify": "",
+                "/asymmetric/sign": "",
+                "/asymmetric/encode": "",
+                "/asymemtric/decode": ""
             }
         }
     }
