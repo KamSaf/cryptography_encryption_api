@@ -84,3 +84,7 @@ def post_sym_decode(post_data: Message | None = None, db: Session = Depends(get_
         return {"decrypted message": decr_msg.rstrip(b"\0")}
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
+
+
+if __name__ == "__main__":
+    pass

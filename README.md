@@ -1,6 +1,6 @@
 ## Description
 
-Web application created with Python and FastAPI for Cryptography classes. 
+REST API application created with Python and FastAPI for Cryptography classes.
 
 
 
@@ -20,16 +20,20 @@ Run this command to install required dependencies
 
 
 
-## To run
+## How to run
 
-While in app directory, run:
+To start application run:
 
-    uvicorn app:app --reload
+    python app.py
+
+Or:
+
+    uvicorn src.main:app --reload
 
 
 
-## To run unit tests
+## Testing
 
-While in app directory, run:
+To run unit test:
 
     python run_tests.py

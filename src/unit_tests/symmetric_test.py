@@ -132,3 +132,7 @@ class TestAuth:
         assert response.status_code == 200
         assert type(gen_key) is str
         assert len(gen_key) == EXPECTED_KEY_LENGTH
+
+
+if __name__ == "__main__":
+    pass
