@@ -16,7 +16,7 @@ Activate virtual environment:
 
 Run this command to install required dependencies
 
-    pip install -r requirements.txt
+        pip install -r requirements.txt
 
 
 
@@ -24,11 +24,11 @@ Run this command to install required dependencies
 
 To start application run:
 
-    python app.py
+        python app.py
 
 Or:
 
-    uvicorn src.main:app --reload
+        uvicorn src.main:app --reload
 
 
 
@@ -36,4 +36,4 @@ Or:
 
 To run unit test:
 
-    python run_tests.py
+        python run_tests.py
