@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-import os
 from sqlalchemy.orm import Session
-from src.db_stuff.utils import get_db
+from src.db_stuff.utils import get_db, get_sym_key as get_key
 from src.db_stuff.models import SymmetricKey
 from src.models.models import NewSymmetricKey, Message
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from src.db_stuff.utils import get_sym_key as get_key
+import os
 
 
 router = APIRouter()

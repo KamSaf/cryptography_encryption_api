@@ -2,22 +2,18 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.exceptions import InvalidSignature
 from fastapi import APIRouter, Depends, HTTPException
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives.serialization import Encoding
-from cryptography.hazmat.primitives.serialization import PublicFormat
-from cryptography.hazmat.primitives.serialization import PrivateFormat
-from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, BestAvailableEncryption
 from src.db_stuff.models import AsymmetricKeys
-from src.db_stuff.utils import get_db
+from src.db_stuff.utils import get_db, get_asym_keys
 from sqlalchemy.orm import Session
 from src.models.models import NewAsymmetricKeys, Message, MessageToVerify
-from src.db_stuff.utils import get_asym_keys
 
 router = APIRouter()
 
 ENCRYPTION_PASSWORD = b"MEGAWONSZ9"
 
 
-# TODO code review, może jakieś sprawdzanie typów? sprawdzanie kluczy zapisywanych przez użytkownika, zaadaptowanie ssh
+# TODO code refactor, może jakieś sprawdzanie typów? sprawdzanie kluczy zapisywanych przez użytkownika, zaadaptowanie ssh
 
 
 @router.get("/asymmetric/key")
