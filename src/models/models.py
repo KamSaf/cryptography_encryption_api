@@ -14,5 +14,10 @@ class Message(BaseModel):
     message: str | None = None
 
 
+class MessageToVerify(BaseModel):
+    message: str | None = None
+    signature: str | None = None
+
+
 if __name__ == "__main__":
     pass

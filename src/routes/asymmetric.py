@@ -1,4 +1,5 @@
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.exceptions import InvalidSignature
 from fastapi import APIRouter, Depends, HTTPException
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.serialization import Encoding
@@ -8,12 +9,15 @@ from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 from src.db_stuff.models import AsymmetricKeys
 from src.db_stuff.utils import get_db
 from sqlalchemy.orm import Session
-from src.models.models import NewAsymmetricKeys, Message
-
+from src.models.models import NewAsymmetricKeys, Message, MessageToVerify
+from src.db_stuff.utils import get_asym_keys
 
 router = APIRouter()
 
 ENCRYPTION_PASSWORD = b"MEGAWONSZ9"
+
+
+# TODO code review, może jakieś sprawdzanie typów? sprawdzanie kluczy zapisywanych przez użytkownika, zaadaptowanie ssh
 
 
 @router.get("/asymmetric/key")
@@ -39,8 +43,8 @@ def get_asym_key(db: Session = Depends(get_db)) -> dict:
         db.commit()
 
         return {
-            "public key": public_key_hex,
-            "private key": private_key_hex,
+            "public_key": public_key_hex,
+            "private_key": private_key_hex,
         }
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
@@ -65,8 +69,8 @@ def get_key_ssh() -> dict:
         ).hex()
 
         return {
-            "public key ssh": public_key_hex,
-            "private key ssh": private_key_hex,
+            "public_key_ssh": public_key_hex,
+            "private_key_ssh": private_key_hex,
         }
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
@@ -94,38 +98,94 @@ def post_asym_key(post_data: NewAsymmetricKeys | None = None, db: Session = Depe
 
 
 @router.post("/asymmetric/verify")
-def post_asym_verify():
+def post_asym_verify(post_data: MessageToVerify | None = None, db: Session = Depends(get_db)):
     """
-    korzystając z aktualnie ustawionego klucza publicznego, weryfikuję czy wiadomość była zaszyfrowana przy jego użyciu
+    Verifies signature on given message.
     """
-    return {"message": "Hello World"}
+    if not post_data:
+        raise HTTPException(status_code=400, detail="No data provided")
+    if not post_data.message:
+        raise HTTPException(status_code=400, detail="No plain text message provided")
+    if not post_data.signature:
+        raise HTTPException(status_code=400, detail="No message signature provided")
+    try:
+        public_key = get_asym_keys(db=db)["public_key"]
+        public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
+
+        public_key_obj.verify(
+            signature=bytes.fromhex(post_data.signature),
+            data=post_data.message.encode(),
+            padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            algorithm=hashes.SHA256()
+        )
+    except InvalidSignature:
+        return {"detail": False}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
+    return {"detail": True}
 
 
 @router.post("/asymmetric/sign")
-def post_asym_sign():
+def post_asym_sign(post_data: Message | None = None, db: Session = Depends(get_db)):
     """
-    korzystając z aktualnie ustawionego klucza prywatnego, podpisuje wiadomość i zwracaą ją podpisaną
+    Signs given message with currently set asymmetric key.
     """
-    return {"message": "Hello World"}
+    if not post_data or not post_data.message:
+        raise HTTPException(status_code=400, detail="No message provided")
+
+    private_key = get_asym_keys(db=db)["private_key"]
+    private_key_obj = serialization.load_der_private_key(
+        data=bytes.fromhex(private_key),
+        password=ENCRYPTION_PASSWORD,
+    )
+
+    signature = private_key_obj.sign(
+        data=post_data.message.encode(),
+        padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+        algorithm=hashes.SHA256()
+    )
+    return {"message": post_data.message, "signature": signature.hex()}
 
 
 @router.post("/asymmetric/encode")
-def post_asym_encode():
+def post_asym_encode(post_data: Message | None = None, db: Session = Depends(get_db)):
     """
-    wysyłamy wiadomość, w wyniku dostajemy ją zaszyfrowaną
+    Encrypts and returns given message using currently set public key.
     """
-    # MESSAGE = "hello this is a message"
-    # encr = public_key_obj.encrypt(plaintext=MESSAGE.encode(), padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
-    # decr = private_key_obj.decrypt(ciphertext=encr, padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
-    return {"message": "Hello World"}
+    if not post_data or not post_data.message:
+        raise HTTPException(status_code=400, detail="No message provided")
+    try:
+        public_key = get_asym_keys(db=db)["public_key"]
+        public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
+        encr = public_key_obj.encrypt(
+            plaintext=post_data.message.encode(),
+            padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        )
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
+    return {"encrypted_message": encr.hex()}
 
 
 @router.post("/asymmetric/decode")
-def post_asym_decode():
+def post_asym_decode(post_data: Message | None = None, db: Session = Depends(get_db)):
     """
-    wysyłamy wiadomość, w wyniku dostajemy ją odszyfrowaną
+    Decrypts and returns given message using currently set private key.
     """
-    return {"message": "Hello World"}
+    if not post_data or not post_data.message:
+        raise HTTPException(status_code=400, detail="No message provided")
+    try:
+        private_key = get_asym_keys(db=db)["private_key"]
+        private_key_obj = serialization.load_der_private_key(
+            data=bytes.fromhex(private_key),
+            password=ENCRYPTION_PASSWORD,
+        )
+        decr = private_key_obj.decrypt(
+            ciphertext=bytes.fromhex(post_data.message),
+            padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        )
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
+    return {"decrypted_message": decr}
 
 
 if __name__ == "__main__":
