@@ -1,22 +1,74 @@
-from fastapi import APIRouter
+from cryptography.hazmat.primitives import hashes
+from fastapi import APIRouter, Depends, HTTPException
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.hazmat.primitives.serialization import PublicFormat
+from cryptography.hazmat.primitives.serialization import PrivateFormat
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
+from src.db_stuff.models import AsymmetricKeys
+from src.db_stuff.utils import get_db
+from sqlalchemy.orm import Session
+
 
 router = APIRouter()
 
+ENCRYPTION_PASSWORD = b"MEGAWONSZ9"
+
 
 @router.get("/asymmetric/key")
-def get_asym_key():
+def get_asym_key(db: Session = Depends(get_db)) -> dict:
     """
-    zwraca nowy klucz publiczny i prywatny w postaci HEX (w JSON jako dict) i ustawia go na serwerze
+    Returns new private and public asymmetric keys and sets them on the server
     """
-    return {"message": "Hello World"}
+    try:
+        private_key_obj = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public_key_obj = private_key_obj.public_key()
+        public_key_hex = public_key_obj.public_bytes(
+            encoding=Encoding.DER,
+            format=PublicFormat.SubjectPublicKeyInfo
+        ).hex()
+        private_key_hex = private_key_obj.private_bytes(
+            encoding=Encoding.DER,
+            format=PrivateFormat.PKCS8,
+            encryption_algorithm=BestAvailableEncryption(password=ENCRYPTION_PASSWORD)
+        ).hex()
+
+        key_obj = AsymmetricKeys(private_key=private_key_hex, public_key=public_key_hex)
+        db.add(key_obj)
+        db.commit()
+
+        return {
+            "public key": public_key_hex,
+            "private key": private_key_hex,
+        }
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
 
 
 @router.get("/asymmetric/key/ssh")
-def get_key_ssh():
+def get_key_ssh() -> dict:
     """
-    zwraca klucz publiczny i prywatny w postaci HEX zapisany w formacie OpenSSH
+    Returns new private and public asymmetric keys in an OpenSSH format
     """
-    return {"message": "Hello World"}
+    try:
+        private_key_obj = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public_key_obj = private_key_obj.public_key()
+        private_key_hex = private_key_obj.private_bytes(
+            encoding=Encoding.PEM,
+            format=PrivateFormat.OpenSSH,
+            encryption_algorithm=BestAvailableEncryption(password=ENCRYPTION_PASSWORD)
+        ).hex()
+        public_key_hex = public_key_obj.public_bytes(
+            encoding=Encoding.OpenSSH,
+            format=PublicFormat.OpenSSH
+        ).hex()
+
+        return {
+            "public key ssh": public_key_hex,
+            "private key ssh": private_key_hex,
+        }
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected error occured")
 
 
 @router.post("/asymmetric/key")
@@ -48,6 +100,9 @@ def post_asym_encode():
     """
     wysyłamy wiadomość, w wyniku dostajemy ją zaszyfrowaną
     """
+    # MESSAGE = "hello this is a message"
+    # encr = public_key_obj.encrypt(plaintext=MESSAGE.encode(), padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+    # decr = private_key_obj.decrypt(ciphertext=encr, padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
     return {"message": "Hello World"}
 
 
@@ -57,3 +112,7 @@ def post_asym_decode():
     wysyłamy wiadomość, w wyniku dostajemy ją odszyfrowaną
     """
     return {"message": "Hello World"}
+
+
+if __name__ == "__main__":
+    pass

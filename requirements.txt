@@ -5,3 +5,4 @@ uvicorn
 SQLAlchemy
 python-multipart
 httpx
+bcrypt
