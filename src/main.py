@@ -18,18 +18,18 @@ def root() -> dict:
         "Avaible endpoints": {
             "GET": {
                 "/symmetric/key": "Return randomly generated symmetric key",
-                "/asymmetric/key": "",
-                "/asymmetric/key/ssh": ""
+                "/asymmetric/key": "Returns new private and public asymmetric keys and sets them on the server",
+                "/asymmetric/key/ssh": "Returns new private and public asymmetric keys in an OpenSSH format"
             },
             "POST": {
                 "/symmetric/key": "Sets symmetric key on the server",
                 "/symmetric/encode": "Encrypts message using currently set symmetric key",
                 "/symmetric/decode": "Decrypts message using currently set symmetric key",
-                "/asymmetric/key": "",
+                "/asymmetric/key": "Sets private and public asymmetric keys on the server",
                 "/asymmetric/verify": "",
                 "/asymmetric/sign": "",
                 "/asymmetric/encode": "",
-                "/asymemtric/decode": ""
+                "/asymemtric/decode": "",
             }
         }
     }
