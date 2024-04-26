@@ -49,8 +49,6 @@ def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No message provided")
     key = get_key(db)
-    if key is None:
-        raise HTTPException(status_code=422, detail="No symmetric key set on the server")
     try:
         hex_key = bytes.fromhex(key)
         iv = os.urandom(IV_LENGTH)
@@ -72,8 +70,6 @@ def post_sym_decode(post_data: Message | None = None, db: Session = Depends(get_
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No key provided")
     key = get_key(db)
-    if not key:
-        raise HTTPException(status_code=422, detail="No symmetric key set on the server")
     try:
         hex_key = bytes.fromhex(key)
         iv = bytes.fromhex(post_data.message[-32:])
