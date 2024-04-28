@@ -26,6 +26,10 @@ def get_sym_key() -> dict:
 def post_sym_key(post_data: NewSymmetricKey | None = None, db: Session = Depends(get_db)) -> dict:
     """
     Sets symmetric key on the server.
+
+    Request body:
+    --------------------------------------
+    key -> Hexadecimal symmetric key to be set on the server
     """
     if not post_data or not post_data.key:
         raise HTTPException(status_code=400, detail="No key provided")
@@ -44,6 +48,10 @@ def post_sym_key(post_data: NewSymmetricKey | None = None, db: Session = Depends
 def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_db)) -> dict:
     """
     Encrypts given message using currently set symmetric key.
+
+    Request body:
+    --------------------------------------
+    message -> Plain text message to be encrypted
     """
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No message provided")
@@ -65,6 +73,10 @@ def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_
 def post_sym_decode(post_data: Message | None = None, db: Session = Depends(get_db)) -> dict:
     """
     Decrypts given message using currently set symmetric key.
+
+    Request body:
+    --------------------------------------
+    message -> Hexadecimal message to be decrypted
     """
     if not post_data or not post_data.message:
         raise HTTPException(status_code=400, detail="No key provided")
