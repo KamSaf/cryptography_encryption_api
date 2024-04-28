@@ -11,9 +11,8 @@ from src.models.models import NewAsymmetricKeys, Message, MessageToVerify
 router = APIRouter()
 
 ENCRYPTION_PASSWORD = b"MEGAWONSZ9"
-
-
-# TODO code refactor, może jakieś sprawdzanie typów? sprawdzanie kluczy zapisywanych przez użytkownika, zaadaptowanie ssh
+PUBLIC_EXPONENT = 65537
+KEY_SIZE = 2048
 
 
 @router.get("/asymmetric/key")
@@ -22,7 +21,7 @@ def get_asym_key(db: Session = Depends(get_db)) -> dict:
     Returns new private and public asymmetric keys and sets them on the server.
     """
     try:
-        private_key_obj = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        private_key_obj = rsa.generate_private_key(public_exponent=PUBLIC_EXPONENT, key_size=KEY_SIZE)
         public_key_obj = private_key_obj.public_key()
         public_key_hex = public_key_obj.public_bytes(
             encoding=Encoding.DER,
@@ -52,7 +51,7 @@ def get_key_ssh() -> dict:
     Returns new private and public asymmetric keys in an OpenSSH format.
     """
     try:
-        private_key_obj = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        private_key_obj = rsa.generate_private_key(public_exponent=PUBLIC_EXPONENT, key_size=KEY_SIZE)
         public_key_obj = private_key_obj.public_key()
         private_key_hex = private_key_obj.private_bytes(
             encoding=Encoding.PEM,
@@ -107,13 +106,15 @@ def post_asym_verify(post_data: MessageToVerify | None = None, db: Session = Dep
     try:
         public_key = get_asym_keys(db=db)["public_key"]
         public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
-
-        public_key_obj.verify(
-            signature=bytes.fromhex(post_data.signature),
-            data=post_data.message.encode(),
-            padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-            algorithm=hashes.SHA256()
-        )
+        if type(public_key_obj) is rsa.RSAPublicKey:
+            public_key_obj.verify(
+                signature=bytes.fromhex(post_data.signature),
+                data=post_data.message.encode(),
+                padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                algorithm=hashes.SHA256()
+            )
+        else:
+            raise HTTPException(status_code=422, detail="Only RSA ecryption is allowed")
     except InvalidSignature:
         return {"detail": False}
     except Exception:
@@ -134,12 +135,14 @@ def post_asym_sign(post_data: Message | None = None, db: Session = Depends(get_d
         data=bytes.fromhex(private_key),
         password=ENCRYPTION_PASSWORD,
     )
-
-    signature = private_key_obj.sign(
-        data=post_data.message.encode(),
-        padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-        algorithm=hashes.SHA256()
-    )
+    if type(private_key_obj) is rsa.RSAPrivateKey:
+        signature = private_key_obj.sign(
+            data=post_data.message.encode(),
+            padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            algorithm=hashes.SHA256()
+        )
+    else:
+        raise HTTPException(status_code=422, detail="Only RSA ecryption is allowed")
     return {"message": post_data.message, "signature": signature.hex()}
 
 
@@ -153,10 +156,13 @@ def post_asym_encode(post_data: Message | None = None, db: Session = Depends(get
     try:
         public_key = get_asym_keys(db=db)["public_key"]
         public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
-        encr = public_key_obj.encrypt(
-            plaintext=post_data.message.encode(),
-            padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-        )
+        if type(public_key_obj) is rsa.RSAPublicKey:
+            encr = public_key_obj.encrypt(
+                plaintext=post_data.message.encode(),
+                padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+            )
+        else:
+            raise HTTPException(status_code=422, detail="Only RSA ecryption is allowed")
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
     return {"encrypted_message": encr.hex()}
@@ -175,10 +181,13 @@ def post_asym_decode(post_data: Message | None = None, db: Session = Depends(get
             data=bytes.fromhex(private_key),
             password=ENCRYPTION_PASSWORD,
         )
-        decr = private_key_obj.decrypt(
-            ciphertext=bytes.fromhex(post_data.message),
-            padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-        )
+        if type(private_key_obj) is rsa.RSAPrivateKey:
+            decr = private_key_obj.decrypt(
+                ciphertext=bytes.fromhex(post_data.message),
+                padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+            )
+        else:
+            raise HTTPException(status_code=422, detail="Only RSA ecryption is allowed")
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
     return {"decrypted_message": decr}

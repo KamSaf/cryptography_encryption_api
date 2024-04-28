@@ -17,7 +17,7 @@ KEY_LENGTH = 64
 @router.get("/symmetric/key")
 def get_sym_key() -> dict:
     """
-    Return randomly generated symmetric key.
+    Returns randomly generated symmetric key.
     """
     return {"generated key": os.urandom(HEX_LENGTH).hex()}
 
