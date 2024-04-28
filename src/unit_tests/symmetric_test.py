@@ -31,7 +31,7 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
-class TestAuth:
+class TestSymmetricRoutes:
 
     def test_post_sym_encode_no_set_key(self):
         MESSAGE = "this is testing message"
@@ -54,7 +54,7 @@ class TestAuth:
         URL = "/symmetric/encode"
         response = client.post(url=URL, json={"message": MESSAGE})
         assert response.status_code == 200
-        encoded_msg = response.json()["encrypted message"]
+        encoded_msg = response.json()["encrypted_message"]
         hex_msg = encoded_msg[:-32]
         hex_iv = encoded_msg[-32:]
         key = bytes.fromhex(HEX_KEY)
@@ -83,7 +83,7 @@ class TestAuth:
         URL = "/symmetric/decode"
         response = client.post(url=URL, json={"message": ENCR_MESSAGE})
         assert response.status_code == 200
-        decr_msg = response.json()["decrypted message"]
+        decr_msg = response.json()["decrypted_message"]
         assert decr_msg == MESSAGE
 
     def test_post_sym_decode_no_message(self):
@@ -128,7 +128,7 @@ class TestAuth:
         EXPECTED_KEY_LENGTH = 64
         URL = "/symmetric/key"
         response = client.get(url=URL)
-        gen_key = response.json()["generated key"]
+        gen_key = response.json()["generated_key"]
         assert response.status_code == 200
         assert type(gen_key) is str
         assert len(gen_key) == EXPECTED_KEY_LENGTH
