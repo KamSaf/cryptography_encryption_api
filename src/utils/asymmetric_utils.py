@@ -175,7 +175,7 @@ def decrypt_message(db: Session, message: str) -> str:
             raise HTTPException(status_code=422, detail="Only RSA ecryption is allowed")
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
-    return decr.hex()
+    return decr.decode()
 
 
 if __name__ == "__main__":

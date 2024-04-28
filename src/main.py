@@ -22,14 +22,14 @@ def root() -> dict:
                 "/asymmetric/key/ssh": "Returns new private and public asymmetric keys in an OpenSSH format"
             },
             "POST": {
-                "/symmetric/key": "Sets symmetric key on the server",
-                "/symmetric/encode": "Encrypts message using currently set symmetric key",
-                "/symmetric/decode": "Decrypts message using currently set symmetric key",
-                "/asymmetric/key": "Sets private and public asymmetric keys on the server",
-                "/asymmetric/verify": "",
-                "/asymmetric/sign": "",
-                "/asymmetric/encode": "",
-                "/asymemtric/decode": "",
+                "/symmetric/key": "Sets symmetric key on the server - Parameters: key",
+                "/symmetric/encode": "Encrypts message using currently set symmetric key - Parameters: message",
+                "/symmetric/decode": "Decrypts message using currently set symmetric key - Parameters: message",
+                "/asymmetric/key": "Sets private and public asymmetric keys on the server - Parameters: public_key, private_key",
+                "/asymmetric/sign": "Signs given message with currently set private RSA key - Parameters: message",
+                "/asymmetric/verify": "Verifies signature on a given message - Parameters: message, signature",
+                "/asymmetric/encode": "Encrypts and returns given message using currently set RSA public key - Parameters: message",
+                "/asymemtric/decode": "Decrypts and returns given message using currently set RSA private key - Parameters: message",
             }
         }
     }

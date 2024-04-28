@@ -19,7 +19,7 @@ def get_sym_key() -> dict:
     """
     Returns randomly generated symmetric key.
     """
-    return {"generated key": os.urandom(HEX_LENGTH).hex()}
+    return {"generated_key": os.urandom(HEX_LENGTH).hex()}
 
 
 @router.post("/symmetric/key")
@@ -64,7 +64,7 @@ def post_sym_encode(post_data: Message | None = None, db: Session = Depends(get_
         padding_length = 16 - (len(post_data.message) % 16)
         padded_msg = bytes(post_data.message, 'utf-8').ljust((len(post_data.message) + padding_length), b"\0")
         encr_msg = (encryptor.update(padded_msg) + encryptor.finalize()).hex()
-        return {"encrypted message": encr_msg + iv.hex()}
+        return {"encrypted_message": encr_msg + iv.hex()}
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
 
@@ -88,7 +88,7 @@ def post_sym_decode(post_data: Message | None = None, db: Session = Depends(get_
         cipher = Cipher(algorithms.AES(hex_key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         decr_msg = decryptor.update(msg) + decryptor.finalize()
-        return {"decrypted message": decr_msg.rstrip(b"\0")}
+        return {"decrypted_message": decr_msg.rstrip(b"\0")}
     except Exception:
         raise HTTPException(status_code=500, detail="Unexpected error occured")
 
