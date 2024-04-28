@@ -33,7 +33,7 @@ Or:
 ## Endpoints
 
 
-| **METHOD**  | **ENDPOINT** | **ACTION** | ***Parameters*** |
+| **METHOD** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | **ENDPOINT** | **ACTION** | ***Parameters*** |
 | ------------- | ------------- | ------------- | ------------- |
 | ```/``` | ```GET``` | Returns list of avaible endpoints | N/A |
 | ```/symmetric/key``` | ```GET``` | Returns randomly generated symmetric key | N/A |
