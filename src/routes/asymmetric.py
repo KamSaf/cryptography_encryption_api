@@ -8,6 +8,7 @@ from src.db_stuff.utils import get_db, get_asym_keys
 from sqlalchemy.orm import Session
 from src.models.models import NewAsymmetricKeys, Message, MessageToVerify
 
+
 router = APIRouter()
 
 ENCRYPTION_PASSWORD = b"MEGAWONSZ9"
@@ -106,7 +107,7 @@ def post_asym_verify(post_data: MessageToVerify | None = None, db: Session = Dep
     try:
         public_key = get_asym_keys(db=db)["public_key"]
         public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
-        if type(public_key_obj) is rsa.RSAPublicKey:
+        if isinstance(public_key_obj, rsa.RSAPublicKey):
             public_key_obj.verify(
                 signature=bytes.fromhex(post_data.signature),
                 data=post_data.message.encode(),
@@ -135,7 +136,7 @@ def post_asym_sign(post_data: Message | None = None, db: Session = Depends(get_d
         data=bytes.fromhex(private_key),
         password=ENCRYPTION_PASSWORD,
     )
-    if type(private_key_obj) is rsa.RSAPrivateKey:
+    if isinstance(private_key_obj, rsa.RSAPrivateKey):
         signature = private_key_obj.sign(
             data=post_data.message.encode(),
             padding=padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
@@ -156,7 +157,7 @@ def post_asym_encode(post_data: Message | None = None, db: Session = Depends(get
     try:
         public_key = get_asym_keys(db=db)["public_key"]
         public_key_obj = serialization.load_der_public_key(data=bytes.fromhex(public_key))
-        if type(public_key_obj) is rsa.RSAPublicKey:
+        if isinstance(public_key_obj, rsa.RSAPublicKey):
             encr = public_key_obj.encrypt(
                 plaintext=post_data.message.encode(),
                 padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
@@ -181,7 +182,7 @@ def post_asym_decode(post_data: Message | None = None, db: Session = Depends(get
             data=bytes.fromhex(private_key),
             password=ENCRYPTION_PASSWORD,
         )
-        if type(private_key_obj) is rsa.RSAPrivateKey:
+        if isinstance(private_key_obj, rsa.RSAPrivateKey):
             decr = private_key_obj.decrypt(
                 ciphertext=bytes.fromhex(post_data.message),
                 padding=padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
